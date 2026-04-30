@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carnasys — Life RPG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Oxanium:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #050a12;
+    --bg2: #0a1220;
+    --bg3: #0f1e35;
+    --panel: rgba(10,20,40,0.95);
+    --border: rgba(0,180,255,0.15);
+    --border2: rgba(0,180,255,0.35);
+    --blue: #00b4ff;
+    --blue2: #0070cc;
+    --gold: #ffd700;
+    --gold2: #ff9d00;
+    --red: #ff3a3a;
+    --green: #00ff88;
+    --purple: #b06eff;
+    --text: #c8ddf5;
+    --text2: #7a9fc4;
+    --text3: #3a5f8a;
+    --font-main: 'Oxanium', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-ui: 'Rajdhani', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(0,100,200,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(80,0,200,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* === SCREENS === */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* === HOME === */
+  .home-header {
+    padding: 20px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .system-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 3px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .system-label:hover { color: var(--blue); }
+
+  .time-display {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .hero-section {
+    padding: 32px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rank-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--blue);
+    letter-spacing: 4px;
+    padding: 4px 12px;
+    border: 1px solid rgba(0,180,255,0.25);
+    background: rgba(0,180,255,0.05);
+    margin-bottom: 4px;
+  }
+
+  .char-name {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(0,180,255,0.5), 0 0 60px rgba(0,180,255,0.15);
+    text-transform: uppercase;
+  }
+
+  .level-display { display: flex; align-items: baseline; gap: 6px; }
+  .level-label { font-family: var(--font-mono); font-size: 12px; color: var(--text3); letter-spacing: 2px; }
+  .level-num { font-size: 28px; font-weight: 700; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.4); }
+
+  .xp-section { padding: 0 24px 20px; }
+
+  .xp-bar-wrap {
+    background: rgba(0,180,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    height: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue2), var(--blue));
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+
+  .xp-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer { 0%{opacity:0.5} 50%{opacity:1} 100%{opacity:0.5} }
+
+  .xp-info { display: flex; justify-content: space-between; margin-top: 6px; }
+  .xp-text { font-family: var(--font-mono); font-size: 11px; color: var(--text2); }
+
+  .today-bar {
+    padding: 0 24px 12px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .today-pill {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 6px 8px;
+    text-align: center;
+  }
+
+  .today-pill-label { font-family: var(--font-mono); font-size: 8px; color: var(--text3); letter-spacing: 1px; margin-bottom: 2px; }
+  .today-pill-val { font-size: 12px; font-weight: 700; color: var(--text); }
+  .today-pill-val.blue { color: var(--blue); }
+  .today-pill-val.red { color: var(--red); }
+
+  .section-header {
+    padding: 0 24px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .section-title { font-family: var(--font-mono); font-size: 10px; color: var(--text3); letter-spacing: 3px; text-transform: uppercase; }
+  .section-badge { font-family: var(--font-mono); font-size: 9px; color: var(--blue); border: 1px solid rgba(0,180,255,0.2); padding: 2px 8px; border-radius: 2px; }
+
+  .quests-preview { padding: 0 24px; display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
+
+  .quest-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .quest-item.completed { border-color: rgba(0,255,136,0.2); }
+  .quest-item.completed .quest-name { color: var(--text3); text-decoration: line-through; }
+  .quest-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .quest-check { width: 16px; height: 16px; border: 1px solid var(--border2); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--green); }
+
+  .bottom-nav {
+    padding: 12px 16px 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .nav-btn {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: var(--text2);
+    font-family: var(--font-main);
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { border-color: var(--border2); color: var(--blue); background: rgba(0,180,255,0.05); }
+  .nav-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(0,180,255,0.08); }
+  .nav-icon { font-size: 18px; }
+  .nav-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-family: var(--font-mono); }
+
+  /* === PANEL SCREENS === */
+  .panel-screen { background: var(--bg); }
+
+  .panel-header {
+    padding: 20px 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+
+  .back-btn {
+    width: 32px; height: 32px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .back-btn:hover { border-color: var(--border2); color: var(--blue); }
+
+  .panel-title { font-size: 16px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #fff; font-family: var(--font-mono); }
+
+  .panel-body { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 32px; }
+
+  /* === INPUT GROUPS === */
+  .input-group { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .input-group-header { padding: 10px 14px; background: rgba(0,180,255,0.04); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 10px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; }
+
+  .input-row { display: flex; align-items: center; padding: 10px 14px; gap: 12px; border-bottom: 1px solid rgba(0,180,255,0.05); }
+  .input-row:last-child { border-bottom: none; }
+  .input-label { flex: 1; font-size: 13px; color: var(--text); font-weight: 600; }
+  .input-sublabel { font-size: 10px; color: var(--text3); font-family: var(--font-mono); margin-top: 1px; }
+
+  .input-field {
+    background: rgba(0,180,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 6px 10px;
+    width: 80px;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-field:focus { border-color: var(--blue); }
+  .input-field.wide { width: 110px; }
+
+  .xp-preview { font-family: var(--font-mono); font-size: 11px; color: var(--gold); min-width: 60px; text-align: right; }
+
+  .toggle-btn { width: 44px; height: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; position: relative; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+  .toggle-btn.on { background: rgba(0,255,136,0.15); border-color: rgba(0,255,136,0.4); }
+  .toggle-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--text3); position: absolute; top: 2px; left: 2px; transition: all 0.2s; }
+  .toggle-btn.on .toggle-dot { left: 22px; background: var(--green); }
+
+  .submit-btn {
+    background: linear-gradient(135deg, var(--blue2), var(--blue));
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+  }
+
+  .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+
+  .result-panel { background: rgba(0,180,255,0.05); border: 1px solid rgba(0,180,255,0.2); border-radius: 6px; padding: 16px; display: none; }
+  .result-panel.show { display: block; }
+
+  .result-row { display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--font-mono); font-size: 12px; color: var(--text2); border-bottom: 1px solid rgba(0,180,255,0.05); }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .val { color: var(--gold); }
+
+  .result-total { display: flex; justify-content: space-between; padding: 10px 0 0; font-size: 15px; font-weight: 700; color: #fff; font-family: var(--font-mono); margin-top: 8px; border-top: 1px solid rgba(0,180,255,0.2); }
+
+  /* === SHOP === */
+  .shop-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+  .shop-item.sunday-free { border-color: rgba(0,255,136,0.2); }
+  .shop-item-info { flex: 1; }
+  .shop-item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .shop-item-note { font-size: 10px; color: var(--text3); font-family: var(--font-mono); margin-top: 2px; }
+  .shop-cost { font-family: var(--font-mono); font-size: 13px; color: var(--red); text-align: right; }
+
+  .spend-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; color: var(--text2); font-family: var(--font-mono); font-size: 10px; padding: 6px 10px; cursor: pointer; letter-spacing: 1px; transition: all 0.2s; margin-top: 4px; display: block; width: 100%; }
+  .spend-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* === JOURNAL === */
+  .journal-entry { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .journal-date { padding: 8px 14px; background: rgba(0,180,255,0.04); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 10px; color: var(--blue); letter-spacing: 2px; }
+  .journal-row { display: flex; justify-content: space-between; padding: 6px 14px; font-size: 12px; color: var(--text2); border-bottom: 1px solid rgba(0,180,255,0.05); font-family: var(--font-mono); }
+  .journal-row:last-child { border-bottom: none; }
+  .journal-val { color: var(--text); }
+  .journal-val.plus { color: var(--green); }
+  .journal-val.minus { color: var(--red); }
+
+  /* === PATCH NOTES === */
+  .patch-entry { background: var(--bg2); border: 1px solid var(--border); border-left: 2px solid var(--blue); border-radius: 0 6px 6px 0; padding: 12px 14px; }
+  .patch-version { font-family: var(--font-mono); font-size: 10px; color: var(--blue); letter-spacing: 2px; margin-bottom: 4px; }
+  .patch-note { font-size: 12px; color: var(--text2); line-height: 1.6; font-family: var(--font-mono); }
+
+  .patch-textarea { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: var(--font-mono); font-size: 12px; padding: 12px; width: 100%; resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s; }
+  .patch-textarea:focus { border-color: var(--border2); }
+
+  .add-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 4px; color: var(--blue); font-family: var(--font-mono); font-size: 12px; letter-spacing: 2px; padding: 10px; cursor: pointer; width: 100%; transition: all 0.2s; }
+  .add-btn:hover { background: rgba(0,180,255,0.08); }
+
+  /* === MISC === */
+  .info-box { background: rgba(0,180,255,0.04); border: 1px solid var(--border); border-radius: 4px; padding: 10px 14px; font-family: var(--font-mono); font-size: 11px; color: var(--text2); line-height: 1.7; }
+  .info-box b { color: var(--blue); font-weight: 600; }
+
+  .sunday-banner { background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.2); border-radius: 4px; padding: 10px 14px; font-family: var(--font-mono); font-size: 11px; color: var(--green); letter-spacing: 1px; text-align: center; display: none; }
+  .sunday-banner.show { display: block; }
+
+  /* Notification */
+  .notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-60px); background: rgba(5,10,18,0.98); border: 1px solid var(--border2); border-radius: 6px; padding: 12px 20px; font-family: var(--font-mono); font-size: 12px; color: var(--blue); letter-spacing: 1px; z-index: 1000; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; }
+  .notif.show { transform: translateX(-50%) translateY(0); }
+  .notif.gold-notif { border-color: rgba(255,215,0,0.4); color: var(--gold); }
+
+  /* Level up */
+  .levelup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  .levelup-overlay.show { display: flex; }
+  .levelup-text { font-size: 11px; font-family: var(--font-mono); letter-spacing: 6px; color: var(--gold2); animation: pulse 1s infinite; }
+  .levelup-num { font-size: 72px; font-weight: 800; color: var(--gold); text-shadow: 0 0 40px rgba(255,215,0,0.8); line-height: 1; animation: pulse 1s infinite; }
+  .levelup-close { margin-top: 20px; font-family: var(--font-mono); font-size: 11px; color: var(--text3); letter-spacing: 3px; cursor: pointer; padding: 8px 20px; border: 1px solid var(--border); border-radius: 2px; }
+  .levelup-close:hover { color: var(--text2); border-color: var(--border2); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+  /* Export/Import panel */
+  .data-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 4px; color: var(--blue); font-family: var(--font-mono); font-size: 12px; letter-spacing: 1px; padding: 10px 14px; cursor: pointer; width: 100%; text-align: left; transition: all 0.2s; }
+  .data-btn:hover { background: rgba(0,180,255,0.08); }
+  .data-btn.danger { color: var(--red); border-color: rgba(255,58,58,0.3); }
+  .data-btn.danger:hover { background: rgba(255,58,58,0.08); }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div id="home" class="screen active">
+    <div class="home-header">
+      <div class="system-label" onclick="showScreen('patch')" title="Patch Notes">// THE SYSTEM //</div>
+      <div class="time-display" id="clock">--:--</div>
+    </div>
+
+    <div class="hero-section">
+      <div class="rank-badge" id="rank-badge">AWAKENED HUNTER</div>
+      <div class="char-name">Carnasys</div>
+      <div class="level-display">
+        <span class="level-label">LVL</span>
+        <span class="level-num" id="home-level">1</span>
+      </div>
+    </div>
+
+    <div class="xp-section">
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-fill" id="xp-bar" style="width:0%"></div>
+      </div>
+      <div class="xp-info">
+        <span class="xp-text" id="xp-current-text">0 XP</span>
+        <span class="xp-text" id="xp-next-text">/ 1,100 XP to next level</span>
+      </div>
+    </div>
+
+    <div class="today-bar">
+      <div class="today-pill">
+        <div class="today-pill-label">TODAY</div>
+        <div class="today-pill-val blue" id="today-earned">+0</div>
+      </div>
+      <div class="today-pill">
+        <div class="today-pill-label">SPENT</div>
+        <div class="today-pill-val red" id="today-spent">-0</div>
+      </div>
+      <div class="today-pill">
+        <div class="today-pill-label">STEPS</div>
+        <div class="today-pill-val" id="today-steps-home">0</div>
+      </div>
+      <div class="today-pill">
+        <div class="today-pill-label">STREAK</div>
+        <div class="today-pill-val" id="nn-streak">0🔥</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">// today's quests</div>
+      <div class="section-badge" id="quest-progress-badge">0/5</div>
+    </div>
+
+    <div class="quests-preview" id="quest-list"></div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn active" onclick="showScreen('home')">
+        <div class="nav-icon">⚔</div>
+        <div class="nav-label">Status</div>
+      </button>
+      <button class="nav-btn" onclick="showScreen('log')">
+        <div class="nav-icon">✦</div>
+        <div class="nav-label">Log</div>
+      </button>
+      <button class="nav-btn" onclick="showScreen('shop')">
+        <div class="nav-icon">◈</div>
+        <div class="nav-label">Shop</div>
+      </button>
+      <button class="nav-btn" onclick="showScreen('journal')">
+        <div class="nav-icon">◉</div>
+        <div class="nav-label">Journal</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- LOG SCREEN -->
+  <div id="log" class="screen panel-screen">
+    <div class="panel-header">
+      <div class="back-btn" onclick="showScreen('home')">←</div>
+      <div class="panel-title">// Daily Log</div>
+    </div>
+    <div class="panel-body">
+      <div class="sunday-banner" id="sunday-banner">✦ SUNDAY — FREE DAY — Entertainment XP Shop items are free today ✦</div>
+
+      <div class="input-group">
+        <div class="input-group-header">◈ PRODUCTIVITY</div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">📚 Study</div>
+            <div class="input-sublabel">5 XP per minute</div>
+          </div>
+          <input class="input-field" type="number" id="study-min" min="0" placeholder="min" oninput="updatePreviews()">
+          <div class="xp-preview" id="study-prev">+0 XP</div>
+        </div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">🏃 Steps Walked</div>
+            <div class="input-sublabel">2 XP per 500 steps · today: <span id="steps-today-label" style="color:var(--blue)">0</span></div>
+          </div>
+          <input class="input-field" type="number" id="steps" min="0" placeholder="steps" oninput="updatePreviews()">
+          <div class="xp-preview" id="steps-prev">+0 XP</div>
+        </div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">🧘 Meditate</div>
+            <div class="input-sublabel">3 XP per 5 min</div>
+          </div>
+          <input class="input-field" type="number" id="meditate-min" min="0" placeholder="min" oninput="updatePreviews()">
+          <div class="xp-preview" id="meditate-prev">+0 XP</div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <div class="input-group-header">◈ DISCIPLINE</div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">🍟 Cravings Resisted</div>
+            <div class="input-sublabel">1 XP per Rp1,000</div>
+          </div>
+          <input class="input-field wide" type="number" id="cravings-rp" min="0" placeholder="Rp" oninput="updatePreviews()">
+          <div class="xp-preview" id="cravings-prev">+0 XP</div>
+        </div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">💦 NN Today</div>
+            <div class="input-sublabel">Streak bonus XP (day+9)</div>
+          </div>
+          <div class="toggle-btn" id="nn-toggle" onclick="toggleNN()">
+            <div class="toggle-dot"></div>
+          </div>
+          <div class="xp-preview" id="nn-prev">+0 XP</div>
+        </div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">📈 Invest / Save</div>
+            <div class="input-sublabel">5 XP per Rp10,000 saved</div>
+          </div>
+          <input class="input-field wide" type="number" id="invest-rp" min="0" placeholder="Rp" oninput="updatePreviews()">
+          <div class="xp-preview" id="invest-prev">+0 XP</div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <div class="input-group-header">◈ SPENDING</div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">💰 Money Spent Today</div>
+            <div class="input-sublabel">Budget: Rp250 per XP earned</div>
+          </div>
+          <input class="input-field wide" type="number" id="money-spent" min="0" placeholder="Rp" oninput="updatePreviews()">
+          <div class="xp-preview" id="spend-status" style="color:var(--text2)">OK</div>
+        </div>
+        <div class="input-row">
+          <div>
+            <div class="input-label">✦ Additional XP</div>
+            <div class="input-sublabel">Bonus / penalty adjustments</div>
+          </div>
+          <input class="input-field" type="number" id="additional-xp" placeholder="XP" oninput="updatePreviews()">
+          <div class="xp-preview" id="additional-prev">+0 XP</div>
+        </div>
+      </div>
+
+      <div class="result-panel" id="result-panel">
+        <div class="result-row"><span>Study XP</span><span class="val" id="r-study">0</span></div>
+        <div class="result-row"><span>Steps XP</span><span class="val" id="r-steps">0</span></div>
+        <div class="result-row"><span>Meditation XP</span><span class="val" id="r-meditate">0</span></div>
+        <div class="result-row"><span>Cravings XP</span><span class="val" id="r-cravings">0</span></div>
+        <div class="result-row"><span>NN Streak XP</span><span class="val" id="r-nn">0</span></div>
+        <div class="result-row"><span>Investing XP</span><span class="val" id="r-invest">0</span></div>
+        <div class="result-row"><span>Additional XP</span><span class="val" id="r-additional">0</span></div>
+        <div class="result-total">
+          <span>TOTAL XP EARNED</span>
+          <span id="r-total">0 XP</span>
+        </div>
+        <div class="result-total" style="font-size:12px;color:var(--text2);padding-top:6px;">
+          <span>Spending budget</span>
+          <span id="r-budget">Rp 0</span>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="submitLog()">SUBMIT DAY LOG</button>
+    </div>
+  </div>
+
+  <!-- SHOP SCREEN -->
+  <div id="shop" class="screen panel-screen">
+    <div class="panel-header">
+      <div class="back-btn" onclick="showScreen('home')">←</div>
+      <div class="panel-title">// XP Shop</div>
+    </div>
+    <div class="panel-body">
+      <div class="sunday-banner" id="shop-sunday-banner">✦ SUNDAY — Entertainment items (1-4, 8-10) are FREE today ✦</div>
+      <div class="info-box">
+        Available XP: <b id="shop-xp-display">0 XP</b><br>
+        Sunday items (1–4, 8–10) are <b style="color:var(--green)">FREE</b> every Sunday. Use wisely.
+      </div>
+      <div id="shop-items-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- JOURNAL SCREEN -->
+  <div id="journal" class="screen panel-screen">
+    <div class="panel-header">
+      <div class="back-btn" onclick="showScreen('home')">←</div>
+      <div class="panel-title">// Journal</div>
+    </div>
+    <div class="panel-body">
+      <div id="journal-entries" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <div id="journal-empty" style="text-align:center;color:var(--text3);font-family:var(--font-mono);font-size:12px;padding:40px 0;">
+        No entries yet. Start logging!
+      </div>
+    </div>
+  </div>
+
+  <!-- PATCH NOTES SCREEN -->
+  <div id="patch" class="screen panel-screen">
+    <div class="panel-header">
+      <div class="back-btn" onclick="showScreen('home')">←</div>
+      <div class="panel-title">// Patch Notes</div>
+    </div>
+    <div class="panel-body">
+      <div class="info-box">Write patch notes on <b>Sundays</b> when adjusting tasks, XP rates, or shop items.</div>
+      <textarea class="patch-textarea" id="patch-input" placeholder="Describe your system changes..."></textarea>
+      <button class="add-btn" onclick="addPatchNote()">+ ADD PATCH NOTE</button>
+
+      <div style="border-top:1px solid var(--border);padding-top:12px;">
+        <div class="section-title" style="margin-bottom:10px;">◈ DATA MANAGEMENT</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="data-btn" onclick="exportData()">⬇ EXPORT SAVE DATA (JSON)</button>
+          <label class="data-btn" style="cursor:pointer;">
+            ⬆ IMPORT SAVE DATA (JSON)
+            <input type="file" accept=".json" id="import-file" onchange="importData(event)" style="display:none;">
+          </label>
+          <button class="data-btn danger" onclick="resetData()">⚠ RESET ALL DATA</button>
+        </div>
+      </div>
+
+      <div id="patch-list" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Notification -->
+<div class="notif" id="notif"></div>
+
+<!-- Level Up Overlay -->
+<div class="levelup-overlay" id="levelup-overlay">
+  <div class="levelup-text">LEVEL UP</div>
+  <div class="levelup-num" id="levelup-num">2</div>
+  <div class="levelup-text" id="levelup-rank">E-RANK HUNTER</div>
+  <div class="levelup-close" onclick="closeLevelUp()">[  TAP TO CONTINUE  ]</div>
+</div>
+
+<script>
+// =============================================
+// XP TABLE
+// =============================================
+const XP_PER_LEVEL = [
+  0,0,1100,1210,1331,1464,1610,1771,1948,2143,2357,
+  2593,2852,3137,3451,3796,4176,4594,5053,5558,6114,
+  6725,7398,8138,8952,9847,10832,11915,13107,14418,15860,
+  17446,19191,21110,23221,25543,28097,30907,33998,37398,41138,
+  45252,49777,54755,60231,66254,72879,80167,88184,97002,106702,
+  117372,129109,142020,156222,171844,189028,207931,228724,251596,276756,
+  304432,334875,368363,405199,445719,490291,539320,593252,652577,717835,
+  789619,868581,955439,1050983,1156081,1271689,1398858,1538744,1692618,1861880,
+  2048068,2252875,2478163,2725979,2998577,3298435,3628279,3991107,4390218,4829240,
+  5312164,5843380,6427718,7070490,7777539,8555293,9410822,10351904,11387094,12525803
+];
+
+const CUMUL_XP = (() => {
+  const c = [0, 0];
+  for (let i = 2; i <= 100; i++) c[i] = c[i-1] + XP_PER_LEVEL[i];
+  return c;
+})();
+
+function xpToLevel(xp) {
+  let lv = 1;
+  for (let i = 2; i <= 100; i++) {
+    if (xp >= CUMUL_XP[i]) lv = i; else break;
+  }
+  return lv;
+}
+
+function xpInLevel(xp) {
+  const lv = xpToLevel(xp);
+  return xp - (CUMUL_XP[lv] || 0);
+}
+
+function xpNeeded(lv) {
+  return lv >= 100 ? 1 : (XP_PER_LEVEL[lv + 1] || 1);
+}
+
+function getRank(lv) {
+  if (lv < 10) return 'AWAKENED HUNTER';
+  if (lv < 20) return 'E-RANK HUNTER';
+  if (lv < 30) return 'D-RANK HUNTER';
+  if (lv < 40) return 'C-RANK HUNTER';
+  if (lv < 50) return 'B-RANK HUNTER';
+  if (lv < 60) return 'A-RANK HUNTER';
+  if (lv < 70) return 'S-RANK HUNTER';
+  if (lv < 80) return 'NATIONAL-LEVEL HUNTER';
+  if (lv < 90) return 'SHADOW MONARCH';
+  return 'ABSOLUTE BEING';
+}
+
+// =============================================
+// SHOP ITEMS
+// =============================================
+const SHOP_ITEMS = [
+  { id:1,  name:'Watch Movie (1 episode)',              cost:150,    sunday:true  },
+  { id:2,  name:'Watch Movie (1 movie)',                cost:300,    sunday:true  },
+  { id:3,  name:'Play game (per hour)',                 cost:400,    sunday:true  },
+  { id:4,  name:'Play game (15 mins)',                  cost:100,    sunday:true  },
+  { id:5,  name:'Spend Rp100,000 on unnecessary items', cost:2000,   sunday:false },
+  { id:6,  name:'Spend Rp1,000,000 on unnecessary items',cost:25000, sunday:false },
+  { id:7,  name:'Spend Rp10,000,000 on unnecessary items',cost:300000,sunday:false},
+  { id:8,  name:'Social media (per hour)',              cost:200,    sunday:true  },
+  { id:9,  name:'Social media (5 mins)',                cost:50,     sunday:true  },
+  { id:10, name:'Listen to music (15 mins)',            cost:50,     sunday:true  },
+  { id:11, name:'Skip exercise (2+ times this week)',   cost:1500,   sunday:false },
+  { id:12, name:'Snacking over 6 PM',                  cost:1000,   sunday:false },
+];
+
+// =============================================
+// DEFAULT QUESTS
+// =============================================
+const DEFAULT_QUESTS = [
+  { id:'study',    name:'Study 60 min',           icon:'📚', target:60,   unit:'min'  },
+  { id:'steps',    name:'Walk 5,000 steps',        icon:'🏃', target:5000, unit:'steps'},
+  { id:'meditate', name:'Meditate 10 min',         icon:'🧘', target:10,   unit:'min'  },
+  { id:'cravings', name:'Resist cravings Rp5,000', icon:'🍟', target:5000, unit:'Rp'   },
+  { id:'nn',       name:'No Nut day',              icon:'💦', target:1,    unit:'done' },
+];
+
+// =============================================
+// STATE
+// =============================================
+const STORAGE_KEY = 'carnasys_life_rpg_v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    return Object.assign(defaultState(), JSON.parse(raw));
+  } catch(e) { return defaultState(); }
+}
+
+function defaultState() {
+  return {
+    totalXP: 0,
+    nnStreak: 0,
+    lastNNDate: '',
+    lastLogDate: '',
+    todayEarned: 0,
+    todaySpent: 0,
+    todayCompleted: [],
+    todaySteps: 0,
+    todayStudyMin: 0,
+    journal: [],
+    patchNotes: [{ date: 'SYSTEM INITIALIZED', text: 'Life RPG v1.1 — XP rebalanced. Investing added. Welcome, Carnasys.' }],
+    quests: DEFAULT_QUESTS,
+  };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = loadState();
+
+// =============================================
+// DATE UTILS
+// =============================================
+function getToday() {
+  return new Date().toLocaleDateString('en-CA');
+}
+
+function isSunday() {
+  return new Date().getDay() === 0;
+}
+
+function checkMidnightReset() {
+  const today = getToday();
+  if (state.lastLogDate && state.lastLogDate !== today) {
+    state.todayEarned = 0;
+    state.todaySpent = 0;
+    state.todayCompleted = [];
+    state.todaySteps = 0;
+    state.todayStudyMin = 0;
+    saveState();
+  }
+}
+
+// =============================================
+// NAVIGATION
+// =============================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  const navMap = { home:0, log:1, shop:2, journal:3 };
+  if (navMap[name] !== undefined) document.querySelectorAll('.nav-btn')[navMap[name]].classList.add('active');
+
+  if (name === 'home')    refreshHome();
+  if (name === 'log')     refreshLog();
+  if (name === 'shop')    refreshShop();
+  if (name === 'journal') refreshJournal();
+  if (name === 'patch')   refreshPatchNotes();
+}
+
+// =============================================
+// HOME
+// =============================================
+function refreshHome() {
+  checkMidnightReset();
+  const lv = xpToLevel(state.totalXP);
+  const inLv = xpInLevel(state.totalXP);
+  const needed = xpNeeded(lv);
+  const pct = Math.min(100, (inLv / needed) * 100);
+
+  document.getElementById('home-level').textContent = lv;
+  document.getElementById('rank-badge').textContent = getRank(lv);
+  document.getElementById('xp-bar').style.width = pct + '%';
+  document.getElementById('xp-current-text').textContent = fmt(inLv) + ' XP';
+  document.getElementById('xp-next-text').textContent = '/ ' + fmt(needed) + ' XP to next level';
+  document.getElementById('today-earned').textContent = '+' + fmt(state.todayEarned);
+  document.getElementById('today-spent').textContent = '-' + fmt(state.todaySpent);
+  document.getElementById('today-steps-home').textContent = fmt(state.todaySteps || 0);
+  document.getElementById('nn-streak').textContent = state.nnStreak + '🔥';
+
+  // Quests
+  const list = document.getElementById('quest-list');
+  list.innerHTML = '';
+  let done = 0;
+  (state.quests || DEFAULT_QUESTS).forEach(q => {
+    const isDone = (state.todayCompleted || []).includes(q.id);
+    if (isDone) done++;
+    const div = document.createElement('div');
+    div.className = 'quest-item' + (isDone ? ' completed' : '');
+    div.innerHTML = `
+      <span class="quest-name">${q.icon} ${q.name}</span>
+      <div class="quest-check">${isDone ? '✓' : ''}</div>
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById('quest-progress-badge').textContent = done + '/' + (state.quests || DEFAULT_QUESTS).length;
+}
+
+// =============================================
+// LOG
+// =============================================
+let nnOn = false;
+
+function refreshLog() {
+  const sun = isSunday();
+  document.getElementById('sunday-banner').classList.toggle('show', sun);
+  nnOn = false;
+  document.getElementById('nn-toggle').classList.remove('on');
+  updatePreviews();
+}
+
+function toggleNN() {
+  nnOn = !nnOn;
+  document.getElementById('nn-toggle').classList.toggle('on', nnOn);
+  updatePreviews();
+}
+
+function getLogValues() {
+  const study     = parseFloat(document.getElementById('study-min').value)  || 0;
+  const steps     = parseFloat(document.getElementById('steps').value)       || 0;
+  const meditate  = parseFloat(document.getElementById('meditate-min').value)|| 0;
+  const cravings  = parseFloat(document.getElementById('cravings-rp').value) || 0;
+  const invest    = parseFloat(document.getElementById('invest-rp').value)   || 0;
+  const additional= parseFloat(document.getElementById('additional-xp').value)|| 0;
+  const money     = parseFloat(document.getElementById('money-spent').value)  || 0;
+
+  // NEW RATES: generous but meaningful
+  // Study: 5 XP/min  → 60min = 300 XP
+  // Steps: 2 XP/500  → 8000 steps = 32 XP
+  // Meditate: 3 XP/5min → 15min = 9 XP
+  // Cravings: 1 XP/Rp1,000 → resisting Rp20,000 = 20 XP
+  // Invest: 5 XP/Rp10,000 → saving Rp100,000 = 50 XP
+  const studyXP    = Math.floor(study * 5);
+  const stepsXP    = Math.floor(steps / 500) * 2;
+  const meditateXP = Math.floor(meditate / 5) * 3;
+  const cravingsXP = Math.floor(cravings / 1000);
+  const investXP   = Math.floor(invest / 10000) * 5;
+
+  // NN streak
+  const today = getToday();
+  const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
+  let nnStreakDay = 0;
+  let nnXP = 0;
+  if (nnOn) {
+    if (state.lastNNDate === yesterday || state.lastNNDate === today) {
+      nnStreakDay = (state.lastNNDate === today) ? state.nnStreak : state.nnStreak + 1;
+    } else {
+      nnStreakDay = 1;
+    }
+    nnXP = 9 + nnStreakDay; // day 1=10, day 2=11 ...
+  }
+
+  const total = studyXP + stepsXP + meditateXP + cravingsXP + investXP + nnXP + additional;
+  const budget = total * 250;
+
+  return { study, steps, meditate, cravings, invest, additional, money,
+           studyXP, stepsXP, meditateXP, cravingsXP, investXP, nnStreakDay, nnXP, total, budget };
+}
+
+function updatePreviews() {
+  const v = getLogValues();
+
+  // Steps today label (cumulative logged steps this day + current input)
+  const stepsLogged = state.todaySteps || 0;
+  const stepsInput  = parseFloat(document.getElementById('steps').value) || 0;
+  const stepsTotalToday = stepsLogged + stepsInput;
+  const stepsLbl = document.getElementById('steps-today-label');
+  if (stepsLbl) stepsLbl.textContent = fmt(stepsTotalToday) + ' steps';
+
+  document.getElementById('study-prev').textContent     = '+' + fmt(v.studyXP) + ' XP';
+  document.getElementById('steps-prev').textContent     = '+' + fmt(v.stepsXP) + ' XP';
+  document.getElementById('meditate-prev').textContent  = '+' + fmt(v.meditateXP) + ' XP';
+  document.getElementById('cravings-prev').textContent  = '+' + fmt(v.cravingsXP) + ' XP';
+  document.getElementById('nn-prev').textContent        = '+' + fmt(v.nnXP) + ' XP';
+  document.getElementById('invest-prev').textContent    = '+' + fmt(v.investXP) + ' XP';
+  document.getElementById('additional-prev').textContent= (v.additional >= 0 ? '+' : '') + fmt(v.additional) + ' XP';
+
+  const spendEl = document.getElementById('spend-status');
+  if (v.money > v.budget && v.money > 0) {
+    spendEl.textContent = '⚠ OVER'; spendEl.style.color = 'var(--red)';
+  } else {
+    spendEl.textContent = 'OK'; spendEl.style.color = 'var(--green)';
+  }
+
+  document.getElementById('result-panel').classList.add('show');
+  document.getElementById('r-study').textContent      = '+' + fmt(v.studyXP) + ' XP';
+  document.getElementById('r-steps').textContent      = '+' + fmt(v.stepsXP) + ' XP';
+  document.getElementById('r-meditate').textContent   = '+' + fmt(v.meditateXP) + ' XP';
+  document.getElementById('r-cravings').textContent   = '+' + fmt(v.cravingsXP) + ' XP';
+  document.getElementById('r-nn').textContent         = nnOn ? '+' + fmt(v.nnXP) + ' XP (streak ' + v.nnStreakDay + ')' : '0 XP';
+  document.getElementById('r-invest').textContent     = '+' + fmt(v.investXP) + ' XP';
+  document.getElementById('r-additional').textContent = (v.additional >= 0 ? '+' : '') + fmt(v.additional) + ' XP';
+  document.getElementById('r-total').textContent      = fmt(v.total) + ' XP';
+  document.getElementById('r-budget').textContent     = 'Rp ' + fmt(v.budget);
+}
+
+function submitLog() {
+  const v = getLogValues();
+  if (v.total === 0 && !nnOn) { showNotif('ENTER SOME DATA FIRST', false); return; }
+
+  const today = getToday();
+  const prevLevel = xpToLevel(state.totalXP);
+
+  state.totalXP += v.total;
+  state.todayEarned = (state.todayEarned || 0) + v.total;
+  state.todaySteps  = (state.todaySteps  || 0) + v.steps;
+  state.lastLogDate = today;
+
+  // NN streak tracking
+  if (nnOn) {
+    state.nnStreak = v.nnStreakDay;
+    state.lastNNDate = today;
+  }
+
+  // Quest completion
+  const completed = [];
+  if ((state.todayStudyMin || 0) + v.study >= 60) completed.push('study');
+  if (state.todaySteps >= 5000)  completed.push('steps');
+  if (v.meditate >= 10) completed.push('meditate');
+  if (v.cravings >= 5000) completed.push('cravings');
+  if (nnOn)             completed.push('nn');
+  state.todayCompleted = [...new Set([...(state.todayCompleted || []), ...completed])];
+  state.todayStudyMin = (state.todayStudyMin || 0) + v.study;
+
+  // Journal
+  state.journal.push({
+    date: new Date().toLocaleString('id-ID', { dateStyle:'full', timeStyle:'short' }),
+    study: v.study, studyXP: v.studyXP,
+    steps: v.steps, stepsXP: v.stepsXP,
+    meditate: v.meditate, meditateXP: v.meditateXP,
+    cravings: v.cravings, cravingsXP: v.cravingsXP,
+    invest: v.invest, investXP: v.investXP,
+    nn: nnOn, nnStreakDay: v.nnStreakDay, nnXP: v.nnXP,
+    additional: v.additional,
+    totalXP: v.total,
+    moneySpent: v.money, budget: v.budget
+  });
+
+  saveState();
+
+  // Reset form
+  ['study-min','steps','meditate-min','cravings-rp','invest-rp','additional-xp','money-spent']
+    .forEach(id => document.getElementById(id).value = '');
+  nnOn = false;
+  document.getElementById('nn-toggle').classList.remove('on');
+  document.getElementById('result-panel').classList.remove('show');
+  // update steps-today label to show accumulated total
+  const stepsLbl = document.getElementById('steps-today-label');
+  if (stepsLbl) stepsLbl.textContent = fmt(state.todaySteps || 0) + ' steps';
+  updatePreviews();
+
+  const newLevel = xpToLevel(state.totalXP);
+  if (newLevel > prevLevel) {
+    document.getElementById('levelup-num').textContent = newLevel;
+    document.getElementById('levelup-rank').textContent = getRank(newLevel);
+    document.getElementById('levelup-overlay').classList.add('show');
+  } else {
+    showNotif('✦ +' + fmt(v.total) + ' XP ADDED', true);
+  }
+}
+
+function closeLevelUp() {
+  document.getElementById('levelup-overlay').classList.remove('show');
+  showScreen('home');
+}
+
+// =============================================
+// SHOP
+// =============================================
+function refreshShop() {
+  const sunday = isSunday();
+  document.getElementById('shop-sunday-banner').classList.toggle('show', sunday);
+  document.getElementById('shop-xp-display').textContent = fmt(state.totalXP) + ' XP';
+
+  const list = document.getElementById('shop-items-list');
+  list.innerHTML = '';
+
+  SHOP_ITEMS.forEach(item => {
+    const free = sunday && item.sunday;
+    const canAfford = free || state.totalXP >= item.cost;
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (free ? ' sunday-free' : '');
+    div.innerHTML = `
+      <div class="shop-item-info">
+        <div class="shop-item-name">${item.name}</div>
+        <div class="shop-item-note">${free ? '✦ FREE TODAY (Sunday)' : 'Cost: ' + fmt(item.cost) + ' XP'}</div>
+      </div>
+      <div style="text-align:right;min-width:70px;">
+        <div class="shop-cost" style="${free ? 'color:var(--green)' : (canAfford ? 'color:var(--red)' : 'color:var(--text3)')}">
+          ${free ? 'FREE' : fmt(item.cost) + ' XP'}
+        </div>
+        <button class="spend-btn" onclick="spendXP(${item.id})" ${(!free && !canAfford) ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>
+          ${free ? 'USE' : 'SPEND'}
+        </button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function spendXP(itemId) {
+  const item = SHOP_ITEMS.find(i => i.id === itemId);
+  if (!item) return;
+  const free = isSunday() && item.sunday;
+  if (!free) {
+    if (state.totalXP < item.cost) { showNotif('NOT ENOUGH XP', false); return; }
+    state.totalXP -= item.cost;
+    state.todaySpent = (state.todaySpent || 0) + item.cost;
+    saveState();
+    showNotif('SPENT ' + fmt(item.cost) + ' XP — ' + item.name, true);
+  } else {
+    showNotif('USED (FREE): ' + item.name, true);
+  }
+  refreshShop();
+  // update home stats too if visible
+}
+
+// =============================================
+// JOURNAL
+// =============================================
+function refreshJournal() {
+  const container = document.getElementById('journal-entries');
+  const empty = document.getElementById('journal-empty');
+  container.innerHTML = '';
+
+  if (!state.journal || !state.journal.length) {
+    empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+
+  [...state.journal].reverse().forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'journal-entry';
+    let rows = '';
+    if (e.study)    rows += row('📚 Study', `${e.study} min → <span class="plus">+${fmt(e.studyXP)} XP</span>`);
+    if (e.steps)    rows += row('🏃 Steps', `${fmt(e.steps)} steps → <span class="plus">+${fmt(e.stepsXP)} XP</span>`);
+    if (e.meditate) rows += row('🧘 Meditate', `${e.meditate} min → <span class="plus">+${fmt(e.meditateXP)} XP</span>`);
+    if (e.cravings) rows += row('🍟 Cravings', `Rp${fmt(e.cravings)} → <span class="plus">+${fmt(e.cravingsXP)} XP</span>`);
+    if (e.invest)   rows += row('📈 Invested', `Rp${fmt(e.invest)} → <span class="plus">+${fmt(e.investXP)} XP</span>`);
+    if (e.nn)       rows += row('💦 NN', `Streak day ${e.nnStreakDay} → <span class="plus">+${fmt(e.nnXP)} XP</span>`);
+    if (e.additional) rows += row('✦ Additional', `<span class="${e.additional >= 0 ? 'plus' : 'minus'}">${e.additional >= 0 ? '+' : ''}${fmt(e.additional)} XP</span>`);
+    rows += `<div class="journal-row" style="font-weight:700;border-top:1px solid rgba(0,180,255,0.1);margin-top:2px;padding-top:6px;">
+      <span>TOTAL EARNED</span><span class="journal-val plus">+${fmt(e.totalXP)} XP</span></div>`;
+    if (e.moneySpent) rows += row('💰 Money Spent', `Rp${fmt(e.moneySpent)} / Budget Rp${fmt(e.budget)}`);
+    div.innerHTML = `<div class="journal-date">◈ ${e.date}</div>${rows}`;
+    container.appendChild(div);
+  });
+}
+
+function row(label, val) {
+  return `<div class="journal-row"><span>${label}</span><span class="journal-val">${val}</span></div>`;
+}
+
+// =============================================
+// PATCH NOTES
+// =============================================
+function addPatchNote() {
+  const text = document.getElementById('patch-input').value.trim();
+  if (!text) { showNotif('WRITE SOMETHING FIRST', false); return; }
+  state.patchNotes.push({
+    date: new Date().toLocaleDateString('en-ID', { dateStyle: 'long' }),
+    text
+  });
+  saveState();
+  document.getElementById('patch-input').value = '';
+  refreshPatchNotes();
+  showNotif('PATCH NOTE ADDED', true);
+}
+
+function refreshPatchNotes() {
+  const list = document.getElementById('patch-list');
+  list.innerHTML = '';
+  if (!state.patchNotes) return;
+  [...state.patchNotes].reverse().forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'patch-entry';
+    div.innerHTML = `<div class="patch-version">◈ ${p.date}</div><div class="patch-note">${p.text}</div>`;
+    list.appendChild(div);
+  });
+}
+
+// =============================================
+// EXPORT / IMPORT / RESET
+// =============================================
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'carnasys_save_' + getToday() + '.json';
+  a.click();
+  showNotif('SAVE DATA EXPORTED', true);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      state = Object.assign(defaultState(), data);
+      saveState();
+      showNotif('SAVE DATA IMPORTED ✓', true);
+      refreshHome();
+    } catch(err) {
+      showNotif('INVALID SAVE FILE', false);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetData() {
+  if (!confirm('RESET ALL DATA? This cannot be undone.')) return;
+  state = defaultState();
+  saveState();
+  showNotif('DATA RESET', false);
+  showScreen('home');
+}
+
+// =============================================
+// NOTIFICATIONS
+// =============================================
+function showNotif(msg, good = true) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'notif' + (good ? ' gold-notif' : '') + ' show';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// =============================================
+// CLOCK
+// =============================================
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+
+// =============================================
+// UTILS
+// =============================================
+function fmt(n) {
+  return Math.round(n).toLocaleString('en-US');
+}
+
+// =============================================
+// INIT
+// =============================================
+checkMidnightReset();
+refreshHome();
+updateClock();
+setInterval(updateClock, 10000);
+</script>
+</body>
+</html>
